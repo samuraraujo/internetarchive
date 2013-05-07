@@ -1,3 +1,6 @@
+#Computes a few statistics about the metadata collect with metadata.rb.
+# Author: Samur Araujo
+
 def statistics
 lines = File.open("metadata.txt","r").readlines
 ambiguous=Hash.new

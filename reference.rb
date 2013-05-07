@@ -1,3 +1,6 @@
+# Auxiliar script.
+# Author: Samur Araujo
+
 def reference
 require "uri"
 lines = File.open("internetarchive.csv","r").readlines

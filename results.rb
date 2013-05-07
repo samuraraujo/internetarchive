@@ -1,3 +1,6 @@
+# Computes precision and recall of the SondaSerimi results.
+# Author: Samur Araujo
+ 
 def fmeasure(a,b)
   return 0.0 if a == 0 || b == 0
   2.0 * (a * b)  / (a+b)
@@ -102,5 +105,5 @@ def missing_entities()
 end
 check_result()
 
- missing_entities
+missing_entities
  

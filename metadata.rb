@@ -1,3 +1,7 @@
+# This scripts uses the Linked Data to enrich information of MusicBrainz uris.
+# Given a set of musicbrainz band uri, it browsers the musicbrainz and dbpedia to collect metadata about the specfic band.
+# Author: Samur Araujo
+
 require  File.dirname(__FILE__)+ '/active_rdf/lib/active_rdf'
 require  File.dirname(__FILE__)+'/activerdf_sparql-1.3.6/lib/activerdf_sparql/init'
 
@@ -5,10 +9,13 @@ $session = Hash.new
 
 #initialize the source and target dataset source object connector
 def metadata()
+  #MusicBrainz endpoint on the Linked Data
   $session[:target] = mount_adapter("http://dbtune.org/musicbrainz/sparql?query=",:post,false)
+  #DBPedia endpoint on the Linked Data
   $session[:dbpedia] = mount_adapter("http://dbpedia.org/sparql",:post,false)
   data =[]
   File.open("metadata.txt", 'w') {|o|
+    #Output of SondaSerimi
     lines = File.open("output.txt", 'r').readlines
     lines.each{|line|
       puts "QUERY #{line}"
@@ -19,6 +26,7 @@ def metadata()
       row << " & "
       row << line[1]
       row << " & "
+      #Query to retrieve Dbpedia uris of the band
       query = "SELECT distinct *  WHERE  { <#{line[1].gsub("musicbrainz.org","dbtune.org/musicbrainz/resource")}> <http://www.w3.org/2002/07/owl#sameAs> ?o} "
       results = Query.new.adapters($session[:target]).sparql(query).execute.flatten
       puts "SAMEAS"
@@ -29,10 +37,12 @@ def metadata()
       if results.size > 0
         x = results[0].to_s.gsub("%28","(").gsub("%29",")")
         puts x
+        #Query to retrieve website of the band as encountered in DBPedia.org
         query = "SELECT distinct *  WHERE  {{ #{x} <http://xmlns.com/foaf/0.1/homepage> ?o} union { #{x} <http://dbpedia.org/property/website> ?o} union { #{x} <http://dbpedia.org/ontology/wikiPageRedirects> ?y . ?y <http://dbpedia.org/property/website> ?o} union { #{x} <http://dbpedia.org/ontology/wikiPageRedirects> ?y . ?y  <http://xmlns.com/foaf/0.1/homepage> ?o}} "
         results = Query.new.adapters($session[:dbpedia]).sparql(query).execute.flatten
         row << results[0].to_s.gsub(">", "").gsub("<","") if results.size > 0
         row << " & "
+        #Query to retrieve location of the band as encountered in DBPedia.org
         query = "SELECT distinct *  WHERE  {{ #{x} <http://dbpedia.org/ontology/hometown> ?o} union { #{x} <http://dbpedia.org/ontology/wikiPageRedirects> ?y . ?y   <http://dbpedia.org/ontology/hometown> ?o} union { #{x} <http://dbpedia.org/property/origin> ?o} union { #{x} <http://dbpedia.org/ontology/wikiPageRedirects> ?y . ?y  <http://dbpedia.org/property/origin> ?o} }"
         results = Query.new.adapters($session[:dbpedia]).sparql(query).execute.flatten
       row << results[0].to_s.gsub("<http://dbpedia.org/resource/","").gsub(">","").gsub("_"," ")  if results.size > 0
